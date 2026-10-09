@@ -12,9 +12,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.teknolojiport.hellotest
+      # CERTIFICATE_PRIVATE_KEY: Codemagic ortam değişkeni olarak (secure) eklenir,
+      # yeni dağıtım sertifikası oluşturulurken kullanılır. Depoya yazılmaz.
     scripts:
       - name: Paketleri indir
         script: flutter packages pub get
@@ -27,6 +26,7 @@ workflows:
         script: |
           app-store-connect fetch-signing-files "com.teknolojiport.hellotest" \
             --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
       - name: Sertifikaları anahtarlığa ekle
         script: keychain add-certificates
