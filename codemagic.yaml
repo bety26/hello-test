@@ -24,6 +24,10 @@ workflows:
         script: keychain initialize
       - name: Özel anahtarı hazırla
         script: |
+          if [ -z "$CERTIFICATE_PRIVATE_KEY_B64" ]; then
+            echo "HATA: CERTIFICATE_PRIVATE_KEY_B64 ortam değişkeni tanımlı değil. Codemagic > uygulama > Environment variables bölümüne ekleyin."
+            exit 1
+          fi
           echo "$CERTIFICATE_PRIVATE_KEY_B64" | base64 --decode > $HOME/cert_key.pem
       - name: Apple'dan sertifika ve profilleri çek
         script: |
