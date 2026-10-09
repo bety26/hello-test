@@ -1,0 +1,49 @@
+# Hello Test — iOS derlemesi (Codemagic)
+# Ön koşul: Codemagic > Team settings > Integrations > App Store Connect bölümünde
+# bir API anahtarı tanımlanmış olmalı. Aşağıdaki "codemagic" o entegrasyonun adıdır.
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.teknolojiport.hellotest
+    scripts:
+      - name: Paketleri indir
+        script: flutter packages pub get
+      - name: CocoaPods kur
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: İmzalama için anahtarlığı hazırla
+        script: keychain initialize
+      - name: Apple'dan sertifika ve profilleri çek
+        script: |
+          app-store-connect fetch-signing-files "com.teknolojiport.hellotest" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Sertifikaları anahtarlığa ekle
+        script: keychain add-certificates
+      - name: Xcode projesine profilleri uygula
+        script: xcode-project use-profiles
+      - name: IPA derle
+        script: |
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Yalnızca TestFlight'a yükler, Apple incelemesine ve App Store'a göndermez.
+        submit_to_testflight: false
+        submit_to_app_store: false
