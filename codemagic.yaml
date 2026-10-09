@@ -9,6 +9,8 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
+      groups:
+        - hello_test_signing
       flutter: stable
       xcode: latest
       cocoapods: default
