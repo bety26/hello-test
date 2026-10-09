@@ -12,8 +12,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      # CERTIFICATE_PRIVATE_KEY: Codemagic ortam değişkeni olarak (secure) eklenir,
-      # yeni dağıtım sertifikası oluşturulurken kullanılır. Depoya yazılmaz.
+      # CERTIFICATE_PRIVATE_KEY_B64: Codemagic ortam değişkeni olarak (secret) eklenir,
+      # özel anahtarın tek satırlık base64 hâlidir. Depoya yazılmaz.
     scripts:
       - name: Paketleri indir
         script: flutter packages pub get
@@ -22,11 +22,14 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
       - name: İmzalama için anahtarlığı hazırla
         script: keychain initialize
+      - name: Özel anahtarı hazırla
+        script: |
+          echo "$CERTIFICATE_PRIVATE_KEY_B64" | base64 --decode > $HOME/cert_key.pem
       - name: Apple'dan sertifika ve profilleri çek
         script: |
           app-store-connect fetch-signing-files "com.teknolojiport.hellotest" \
             --type IOS_APP_STORE \
-            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --certificate-key=@file:$HOME/cert_key.pem \
             --create
       - name: Sertifikaları anahtarlığa ekle
         script: keychain add-certificates
