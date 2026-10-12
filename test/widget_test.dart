@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:hellotest/main.dart';
+import 'package:hellotest/providers/notes_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('Açılışta varsayılan alan görünür, not eklenebilir', (tester) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => NotesProvider()..init(),
+        child: const NotDefteriApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('Not Defteri'), findsOneWidget);
+    expect(find.text('Genel'), findsOneWidget);
+    expect(find.text('0 not'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Alana girip not ekle
+    await tester.tap(find.text('Genel'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('henüz not yok'), findsOneWidget);
+
+    await tester.tap(find.text('Yeni not'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Başlık'), 'Alışveriş');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Notunuzu buraya yazın...'),
+      'Süt, ekmek',
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alışveriş'), findsOneWidget);
+    expect(find.text('Süt, ekmek'), findsOneWidget);
   });
 }
